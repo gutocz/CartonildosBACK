@@ -48,7 +48,7 @@ export class GameManager {
     if (!this.userQueue) return;
     this.table.clear();
     this.roundMaster = this.userQueue.next();
-    this.question = drawNewQuestion(this.question);
+    this.question = drawNewQuestion();
     
     if (!this.roundMaster) {
         this.gameIsRunning = false;
@@ -81,11 +81,17 @@ export class GameManager {
 
   chooseWinner(winnerUsername: string, users: Map<User, any>, broadcast: (message: WebSocketMessage) => void): void {
     const winner = Array.from(users.keys()).find(u => u.username === winnerUsername);
-    if (winner) {
+    const winningCard = this.table.get(winnerUsername);
+
+    if (winner && winningCard) {
       winner.points += 1;
       broadcast({
         type: MESSAGE_TYPES.WINNER_CHOSEN,
-        payload: { winner: winner.username, points: winner.points }
+        payload: { 
+            winner: winner.username, 
+            points: winner.points,
+            cardContent: winningCard.cardContent 
+        }
       });
 
       setTimeout(() => {
@@ -99,7 +105,7 @@ export class GameManager {
       users.forEach((_ws, user) => {
           const cardsToDraw = GAME_RULES.CARDS_PER_HAND - user.hand.length;
           if (cardsToDraw > 0) {
-              const newCards = getRandomHand(answers, cardsToDraw);
+              const newCards = getRandomHand(answers, cardsToDraw, user.hand);
               user.hand.push(...newCards);
           }
       });

@@ -62,8 +62,19 @@ export class MessageHandler {
   
   private handleJoinRoom(ws: MyWebSocket, username: string): void {
     const newUser = this.userManager.joinRoom(username, ws);
-    ws.send(JSON.stringify({ type: MESSAGE_TYPES.SUCCESS_JOIN_ROOM, payload: 'User registered.' }));
-    this.userManager.updateUser(newUser);
+    const userList = this.userManager.getAllUsers().map(user => ({
+        username: user.username,
+        points: user.points,
+    }));
+
+    ws.send(JSON.stringify({ 
+        type: MESSAGE_TYPES.SUCCESS_JOIN_ROOM, 
+        payload: {
+            user: newUser,
+            userList: userList
+        } 
+    }));
+
     this.userManager.broadcastUserList();
     this.userManager.broadcast({ type: MESSAGE_TYPES.CHAT, payload: `${newUser.username} entrou na sala!` });
   }
